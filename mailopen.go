@@ -6,6 +6,7 @@ import (
 	"html"
 	"io/ioutil"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 
@@ -68,7 +69,7 @@ func (ps FileSender) Send(m mail.Message) error {
 }
 
 func (ps FileSender) saveEmailBody(content, name string) (string, error) {
-	path := fmt.Sprintf("tmp/sender-%s-%v.html", name, uuid.Must(uuid.NewV4()))
+	path := fmt.Sprintf(path.Join("tmp", "sender-%s-%v.html"), name, uuid.Must(uuid.NewV4()))
 	err := ioutil.WriteFile(path, []byte(content), 0644)
 	return path, err
 }
@@ -80,13 +81,12 @@ func (ps FileSender) addHTMLHeader(content string, m mail.Message) string {
 }
 
 func (ps FileSender) addPlainHeader(content string, m mail.Message) string {
-
 	header := fmt.Sprintf(plainHeaderTmpl, html.EscapeString(m.From), strings.Join(m.CC, ","), strings.Join(m.Bcc, ","), strings.Join(m.To, ","), html.EscapeString(m.Subject))
 	var re = regexp.MustCompile(`(.*<pre[^>]*>)((.|[\n\r])*)(<\/pre>.*)`)
 	return re.ReplaceAllString(content, fmt.Sprintf(`$1%v$2$3`, header))
 }
 
-// NewFileSender creates a sender that writes emails into disk
-func NewFileSender() FileSender {
+// New creates a sender that writes emails into disk
+func New() FileSender {
 	return FileSender{}
 }
