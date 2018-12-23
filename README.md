@@ -11,17 +11,13 @@ Mailopen is only intended for development purposes, the way you use it is by sim
 var Sender mail.Sender
 
 func init() {
-	...
-
-	if envy.Get("GO_ENV", "development") == "development" {
+    if envy.Get("GO_ENV", "development") == "development" {
         Sender = mailopen.New()
 		return
     }
     
     Sender = sendgrid.NewSendgridSender(envy.Get("SENDGRID_API_KEY", ""))
-
-	
 }
 ```
 
-By default mailopen writes files to the `tmp` folder. 
+Then you will use your `Sender` instance as usual by calling `Sender.Send(m)` with the variant that in development it will open your emails in the browser.
