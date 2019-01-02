@@ -79,13 +79,13 @@ func (ps FileSender) saveEmailBody(content, name, ctype string) (string, error) 
 }
 
 func (ps FileSender) addHTMLHeader(content string, m mail.Message) string {
-	header := fmt.Sprintf(htmlHeaderTmpl, html.EscapeString(m.From), strings.Join(m.To, ","), strings.Join(m.CC, ","), strings.Join(m.BCC, ","), html.EscapeString(m.Subject))
+	header := fmt.Sprintf(htmlHeaderTmpl, html.EscapeString(m.From), strings.Join(m.To, ","), strings.Join(m.CC, ","), strings.Join(m.Bcc, ","), html.EscapeString(m.Subject))
 	var re = regexp.MustCompile(`(.*<body[^>]*>)((.|[\n\r])*)(<\/body>.*)`)
 	return re.ReplaceAllString(content, fmt.Sprintf(`$1%v$2$3`, header))
 }
 
 func (ps FileSender) addPlainHeader(content string, m mail.Message) string {
-	header := fmt.Sprintf(plainHeaderTmpl, html.EscapeString(m.From), strings.Join(m.To, ","), strings.Join(m.CC, ","), strings.Join(m.BCC, ","), html.EscapeString(m.Subject))
+	header := fmt.Sprintf(plainHeaderTmpl, html.EscapeString(m.From), strings.Join(m.To, ","), strings.Join(m.CC, ","), strings.Join(m.Bcc, ","), html.EscapeString(m.Subject))
 	var re = regexp.MustCompile(`(.*<pre[^>]*>)((.|[\n\r])*)(<\/pre>.*)`)
 	return re.ReplaceAllString(content, fmt.Sprintf(`$1%v$2$3`, header))
 }
