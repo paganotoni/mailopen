@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html"
 	"io/ioutil"
-	"net/url"
 	"path"
 	"regexp"
 	"strings"
@@ -48,13 +47,13 @@ func (ps FileSender) Send(m mail.Message) error {
 	}
 
 	htmlContent := ps.addHTMLHeader(m.Bodies[0].Content, m)
-	htmlPath, err := ps.saveEmailBody(htmlContent, url.PathEscape(m.Subject), "html")
+	htmlPath, err := ps.saveEmailBody(htmlContent, "html")
 	if err != nil {
 		return err
 	}
 
 	plainContent := ps.addPlainHeader(fmt.Sprintf("<html><head></head><body><pre>%v</pre></body></html>", m.Bodies[1].Content), m)
-	plainPath, err := ps.saveEmailBody(plainContent, url.PathEscape(m.Subject), "txt")
+	plainPath, err := ps.saveEmailBody(plainContent, "txt")
 	if err != nil {
 		return err
 	}
@@ -72,8 +71,8 @@ func (ps FileSender) Send(m mail.Message) error {
 	return nil
 }
 
-func (ps FileSender) saveEmailBody(content, name, ctype string) (string, error) {
-	path := fmt.Sprintf(path.Join("tmp", "sender-%s-%s-%v.html"), name, ctype, uuid.Must(uuid.NewV4()))
+func (ps FileSender) saveEmailBody(content, ctype string) (string, error) {
+	path := fmt.Sprintf(path.Join("tmp", "mailopen-%v-%s.html"), uuid.Must(uuid.NewV4()), ctype)
 	err := ioutil.WriteFile(path, []byte(content), 0644)
 	return path, err
 }
