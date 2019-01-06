@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/paganotoni/mailopen.svg?branch=master)](https://travis-ci.org/paganotoni/mailopen)
+
 ## Mailopen
 
 Mailopen is a buffalo mailer that allows to see sent emails in the browser instead of sending these using SMTP or other sender used in production environments.
