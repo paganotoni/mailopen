@@ -20,11 +20,29 @@ import (
 var Sender mail.Sender
 
 func init() {
+    sgSender := sendgrid.NewSendgridSender(envy.Get("SENDGRID_API_KEY", ""))
+    Sender = mailopen.Wrap(sgSender)
+}
+```
+
+Internally Wrap function returns mailopen.FileSender instance only if GO_ENV is `development`, otherwise it will return passed sender.
+
+You can always write it yourself in case your conditions to switch sender are not only to be in the development environment.
+
+```go
+import (
+    ...
+    "github.com/paganotoni/gonbuffalo"
+    sendgrid "github.com/paganotoni/sendgrid-sender"
+    ...
+)
+
+func init() {
     if envy.Get("GO_ENV", "development") == "development" {
         Sender = mailopen.New()
 		return
     }
-    
+
     Sender = sendgrid.NewSendgridSender(envy.Get("SENDGRID_API_KEY", ""))
 }
 ```
