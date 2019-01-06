@@ -25,9 +25,9 @@ func init() {
 }
 ```
 
-Internally Wrap function returns mailopen.FileSender instance only if GO_ENV is `development`, otherwise it will return passed sender.
+Internally `Wrap` function returns `mailopen.FileSender` instance only if GO_ENV is `development`, otherwise it will return passed sender.
 
-You can always write it yourself in case your conditions to switch sender are not only to be in the development environment.
+You can always write it yourself in case your conditions to switch sender are not only to be in the `development` environment.
 
 ```go
 import (
