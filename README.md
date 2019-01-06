@@ -7,6 +7,13 @@ Mailopen is a buffalo mailer that allows to see sent emails in the browser inste
 Mailopen is only intended for development purposes, the way you use it is by simply initialyzing your mailer to be a mailopen instance instead of your regular sender, p.e:
 
 ```go
+import (
+    ...
+    "github.com/paganotoni/gonbuffalo"
+    sendgrid "github.com/paganotoni/sendgrid-sender"
+    ...
+)
+
 //Sender allows us to send emails
 var Sender mail.Sender
 
