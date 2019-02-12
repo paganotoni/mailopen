@@ -11,7 +11,7 @@ Mailopen is only intended for development purposes, the way you use it is by sim
 ```go
 import (
     ...
-    "github.com/paganotoni/gonbuffalo"
+    "github.com/gobuffalo/buffalo/mail"
     sendgrid "github.com/paganotoni/sendgrid-sender"
     ...
 )
@@ -32,7 +32,7 @@ You can always write it yourself in case your conditions to switch sender are no
 ```go
 import (
     ...
-    "github.com/paganotoni/gonbuffalo"
+    "github.com/gobuffalo/buffalo/mail"
     sendgrid "github.com/paganotoni/sendgrid-sender"
     ...
 )
