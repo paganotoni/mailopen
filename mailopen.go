@@ -10,11 +10,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/gobuffalo/flect"
 
 	"github.com/gobuffalo/buffalo/mail"
 	"github.com/pkg/browser"
 )
+
+var Testing = false
 
 const (
 	htmlHeaderTmpl = `
@@ -91,8 +95,18 @@ func (ps FileSender) addPlainHeader(content string, m mail.Message) string {
 }
 
 func (ps FileSender) saveEmailBody(content, subject, ctype string) (string, error) {
-	path := path.Join(ps.TempDir, fmt.Sprintf("%s_%s.html", flect.Underscore(subject), ctype))
-	err := ioutil.WriteFile(path, []byte(content), 0644)
+	id, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	filePath := fmt.Sprintf("%s_%s_%s.html", flect.Underscore(subject), ctype, id)
+	if Testing {
+		filePath = fmt.Sprintf("%s_%s.html", flect.Underscore(subject), ctype)
+	}
+
+	path := path.Join(ps.TempDir, filePath)
+	err = ioutil.WriteFile(path, []byte(content), 0644)
 	return path, err
 }
 

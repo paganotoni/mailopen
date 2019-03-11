@@ -14,8 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//TODO: options open only
+func init() {
+	mailopen.Testing = true
+}
 
+//TODO: options open only
 func Test_Send(t *testing.T) {
 	r := require.New(t)
 	sender := mailopen.New()
