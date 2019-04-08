@@ -54,13 +54,21 @@ func (ps FileSender) Send(m mail.Message) error {
 		return errors.New("you must specify at least 2 bodies HTML and plain text")
 	}
 
-	htmlContent := ps.addHTMLHeader(m.Bodies[0].Content, m)
+	var htmlBody, plainBody string
+	if strings.Contains(m.Bodies[0].ContentType, "text/html") {
+		htmlBody = m.Bodies[0].Content
+		plainBody = m.Bodies[1].Content
+	} else {
+		htmlBody = m.Bodies[1].Content
+		plainBody = m.Bodies[0].Content
+	}
+
+	htmlContent := ps.addHTMLHeader(htmlBody, m)
 	htmlPath, err := ps.saveEmailBody(htmlContent, m.Subject, "html")
 	if err != nil {
 		return err
 	}
-
-	plainContent := ps.addPlainHeader(fmt.Sprintf("<html><head></head><body><pre>%v</pre></body></html>", m.Bodies[1].Content), m)
+	plainContent := ps.addPlainHeader(fmt.Sprintf("<html><head></head><body><pre>%v</pre></body></html>", plainBody), m)
 	plainPath, err := ps.saveEmailBody(plainContent, m.Subject, "txt")
 
 	if err != nil {
