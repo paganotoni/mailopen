@@ -1,10 +1,13 @@
 package mailopen
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"html"
+	"html/template"
 	"io/ioutil"
+	"mime"
 	"os"
 	"path"
 	"regexp"
@@ -28,6 +31,9 @@ const (
 	<p style="margin-bottom: 0;"><span style="font-weight: bold;">Cc:</span> %v </p>
 	<p style="margin-bottom: 0;"><span style="font-weight: bold;">Bcc:</span> %v </p>
 	<p style="margin-bottom: 0;"><span style="font-weight: bold;">Subject:</span> %v</p>
+	{{range .}}
+		<p style="margin-bottom: 0;"><span style="font-weight: bold;">Attachment-{{.Name}}:</span><a href="{{.Path}}" download="{{.Name}}">{{.Name}}</a></p>
+	{{end}}
 </div>
 `
 	plainHeaderTmpl = `
@@ -47,6 +53,11 @@ type FileSender struct {
 	TempDir string
 }
 
+type AttFile struct {
+	Path string
+	Name string
+}
+
 //Send sends an email to Sendgrid for delivery, it assumes
 //bodies[0] is HTML body and bodies[1] is text.
 func (ps FileSender) Send(m mail.Message) error {
@@ -55,13 +66,13 @@ func (ps FileSender) Send(m mail.Message) error {
 	}
 
 	htmlContent := ps.addHTMLHeader(m.Bodies[0].Content, m)
-	htmlPath, err := ps.saveEmailBody(htmlContent, m.Subject, "html")
+	htmlPath, err := ps.saveEmailBody(htmlContent, "html", m)
 	if err != nil {
 		return err
 	}
 
 	plainContent := ps.addPlainHeader(fmt.Sprintf("<html><head></head><body><pre>%v</pre></body></html>", m.Bodies[1].Content), m)
-	plainPath, err := ps.saveEmailBody(plainContent, m.Subject, "txt")
+	plainPath, err := ps.saveEmailBody(plainContent, "txt", m)
 
 	if err != nil {
 		return err
@@ -94,20 +105,63 @@ func (ps FileSender) addPlainHeader(content string, m mail.Message) string {
 	return re.ReplaceAllString(content, fmt.Sprintf(`$1%v$2$3`, header))
 }
 
-func (ps FileSender) saveEmailBody(content, subject, ctype string) (string, error) {
+func (ps FileSender) saveEmailBody(content, ctype string, m mail.Message) (string, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
 
-	filePath := fmt.Sprintf("%s_%s_%s.html", flect.Underscore(subject), ctype, id)
-	if Testing {
-		filePath = fmt.Sprintf("%s_%s.html", flect.Underscore(subject), ctype)
+	afs, err := ps.saveAttachmentFiles(m.Attachments)
+	if err != nil {
+		return "", err
 	}
 
+	tmpl := template.Must(template.New("mail").Parse(content))
+
+	var tpl bytes.Buffer
+	err = tmpl.Execute(&tpl, afs)
+	if err != nil {
+		return "", err
+	}
+
+	filePath := fmt.Sprintf("%s_%s_%s.html", flect.Underscore(m.Subject), ctype, id)
+	if Testing {
+		filePath = fmt.Sprintf("%s_%s.html", flect.Underscore(m.Subject), ctype)
+	}
 	path := path.Join(ps.TempDir, filePath)
-	err = ioutil.WriteFile(path, []byte(content), 0644)
+	err = ioutil.WriteFile(path, tpl.Bytes(), 0644)
+
 	return path, err
+}
+
+func (ps FileSender) saveAttachmentFiles(Attachments []mail.Attachment) ([]AttFile, error) {
+	var afs []AttFile
+	var af AttFile
+	for _, a := range Attachments {
+		exts, err := mime.ExtensionsByType(a.ContentType)
+		if err != nil {
+			return nil, err
+		}
+
+		filePath := path.Join(ps.TempDir, fmt.Sprintf("%s_%s%s", uuid.Must(uuid.NewV4()), a.Name, exts[0]))
+
+		af.Path = filePath
+		af.Name = a.Name
+
+		b, err := ioutil.ReadAll(a.Reader)
+		if err != nil {
+			return nil, err
+		}
+
+		err = ioutil.WriteFile(filePath, b, 0777)
+		if err != nil {
+			return nil, err
+		}
+
+		afs = append(afs, af)
+	}
+
+	return afs, nil
 }
 
 // New creates a sender that writes emails into disk
