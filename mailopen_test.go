@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/gobuffalo/buffalo/mail"
@@ -42,10 +43,10 @@ func Test_Send(t *testing.T) {
 		{ContentType: "text/plain", Content: "Same message"},
 	}
 	m.Attachments = []mail.Attachment{
-		{Name: "csv_test", Reader: openFile("test_files/csv_sample.csv", r), ContentType: "text/csv", Embedded: false},
-		{Name: "img_test", Reader: openFile("test_files/img_sample.jpeg", r), ContentType: "image/jpeg", Embedded: false},
-		{Name: "pdf_test", Reader: openFile("test_files/pdf_sample.pdf", r), ContentType: "application/pdf", Embedded: false},
-		{Name: "zip_test", Reader: openFile("test_files/zip_sample.zip", r), ContentType: "application/zip", Embedded: false},
+		{Name: "csv_test", Reader: openFile(filepath.Join("test_files", "csv_sample.csv"), r), ContentType: "text/csv", Embedded: false},
+		{Name: "img_test", Reader: openFile(filepath.Join("test_files", "img_sample.jpeg"), r), ContentType: "image/jpeg", Embedded: false},
+		{Name: "pdf_test", Reader: openFile(filepath.Join("test_files", "pdf_sample.pdf"), r), ContentType: "application/pdf", Embedded: false},
+		{Name: "zip_test", Reader: openFile(filepath.Join("test_files", "zip_sample.zip"), r), ContentType: "application/zip", Embedded: false},
 	}
 
 	r.NoError(sender.Send(m))
