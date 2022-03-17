@@ -15,18 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func init() {
-	mailopen.Testing = true
+type falseSender struct{}
+
+func (ps falseSender) Send(m mail.Message) error {
+	return nil
 }
 
-func openFile(name string, r *require.Assertions) *os.File {
-	f, err := os.Open(name)
-	r.NoError(err)
-
-	return f
-}
-
-//TODO: options open only
 func Test_Send(t *testing.T) {
 	mailopen.Testing = true
 
@@ -124,7 +118,7 @@ func Test_SendWithoutAttachments(t *testing.T) {
 
 	r.NoError(sender.Send(m))
 
-	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_%s.html", flect.Underscore(m.Subject), "html"))
+	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_%s.html", flect.Underscore(m.Subject), "0"))
 
 	dat, err := ioutil.ReadFile(htmlFile)
 	r.NoError(err)
@@ -154,8 +148,9 @@ func Test_Wrap(t *testing.T) {
 
 }
 
-type falseSender struct{}
+func openFile(name string, r *require.Assertions) *os.File {
+	f, err := os.Open(name)
+	r.NoError(err)
 
-func (ps falseSender) Send(m mail.Message) error {
-	return nil
+	return f
 }
