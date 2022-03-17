@@ -1,4 +1,4 @@
-module github.com/paganotoni/mailopen
+module github.com/paganotoni/mailopen/v2
 
 go 1.17
 
