@@ -28,8 +28,10 @@ func openFile(name string, r *require.Assertions) *os.File {
 
 //TODO: options open only
 func Test_Send(t *testing.T) {
+	mailopen.Testing = true
+
 	r := require.New(t)
-	sender := mailopen.New()
+	sender := mailopen.WithOptions()
 	sender.Open = false
 
 	m := mail.NewMessage()
@@ -38,10 +40,12 @@ func Test_Send(t *testing.T) {
 	m.CC = []string{"aa@other.com"}
 	m.Bcc = []string{"aax@other.com"}
 	m.Subject = "something"
+
 	m.Bodies = []mail.Body{
 		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
 		{ContentType: "text/plain", Content: "Same message"},
 	}
+
 	m.Attachments = []mail.Attachment{
 		{Name: "csv_test", Reader: openFile(filepath.Join("test_files", "csv_sample.csv"), r), ContentType: "text/csv", Embedded: false},
 		{Name: "img_test", Reader: openFile(filepath.Join("test_files", "img_sample.jpeg"), r), ContentType: "image/jpeg", Embedded: false},
@@ -50,8 +54,9 @@ func Test_Send(t *testing.T) {
 	}
 
 	r.NoError(sender.Send(m))
-	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_%s.html", flect.Underscore(m.Subject), "html"))
-	txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_%s.html", flect.Underscore(m.Subject), "txt"))
+
+	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_0.html", flect.Underscore(m.Subject)))
+	txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_1.html", flect.Underscore(m.Subject)))
 
 	r.FileExists(htmlFile)
 	r.FileExists(txtFile)
@@ -80,8 +85,10 @@ func Test_Send(t *testing.T) {
 }
 
 func Test_SendWithOneBody(t *testing.T) {
+	mailopen.Testing = true
+
 	r := require.New(t)
-	sender := mailopen.New()
+	sender := mailopen.WithOptions()
 	sender.Open = false
 
 	m := mail.NewMessage()
@@ -98,8 +105,10 @@ func Test_SendWithOneBody(t *testing.T) {
 }
 
 func Test_SendWithoutAttachments(t *testing.T) {
+	mailopen.Testing = true
+
 	r := require.New(t)
-	sender := mailopen.New()
+	sender := mailopen.WithOptions()
 	sender.Open = false
 
 	m := mail.NewMessage()
@@ -123,6 +132,8 @@ func Test_SendWithoutAttachments(t *testing.T) {
 }
 
 func Test_Wrap(t *testing.T) {
+	mailopen.Testing = true
+
 	r := require.New(t)
 
 	os.Setenv("GO_ENV", "development")

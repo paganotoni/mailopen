@@ -1,0 +1,10 @@
+<div class="email-information" style="background-color:white; padding: 10px; border-bottom: 1px solid #333;">
+	<p style="margin-bottom: 0;"><span style="font-weight: bold;">From:</span> %v </p>
+	<p style="margin-bottom: 0;"><span style="font-weight: bold;">To:</span> %v </p>
+	<p style="margin-bottom: 0;"><span style="font-weight: bold;">Cc:</span> %v </p>
+	<p style="margin-bottom: 0;"><span style="font-weight: bold;">Bcc:</span> %v </p>
+	<p style="margin-bottom: 0;"><span style="font-weight: bold;">Subject:</span> %v</p>
+	{{range .}}
+		<p style="margin-bottom: 0;"><span style="font-weight: bold;">Attachment-{{.Name}}:</span><a href="{{.Path}}" download="{{.Name}}">{{.Name}}</a></p>
+	{{end}}
+</div>
