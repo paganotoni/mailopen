@@ -10,7 +10,7 @@ import (
 
 	"github.com/gobuffalo/buffalo/mail"
 	"github.com/gobuffalo/flect"
-	"github.com/paganotoni/mailopen"
+	"github.com/paganotoni/mailopen/v2"
 
 	"github.com/stretchr/testify/require"
 )
