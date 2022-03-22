@@ -1,6 +1,6 @@
-From: %v
-To: %v
-Cc: %v
-Bcc: %v 
-Subject: %v
+From: %v <br>
+To: %v <br>
+Cc: %v <br>
+Bcc: %v <br>
+Subject: %v <br>
 ----------------------------
