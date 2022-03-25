@@ -39,7 +39,7 @@ import (
 
 func init() {
     if envy.Get("GO_ENV", "development") == "development" {
-        Sender = mailopen.WithOptions(mailopen.OpenOnly("text/html"))
+        Sender = mailopen.WithOptions(mailopen.Only("text/html"))
         
 		return
     }
