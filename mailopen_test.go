@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gobuffalo/buffalo/mail"
@@ -86,9 +85,7 @@ func Test_Send(t *testing.T) {
 	r.Contains(string(txtContent), m.Subject)
 	r.Contains(string(txtContent), "Some message")
 
-	format := strings.ReplaceAll(txtFormat, "\t", "")
-
-	r.Contains(string(txtContent), fmt.Sprintf(format, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
+	r.Contains(string(txtContent), fmt.Sprintf(txtFormat, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
 }
 
 func Test_SendWithOptionsOnlyHTML(t *testing.T) {
