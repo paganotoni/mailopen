@@ -1,6 +1,7 @@
 package mailopen_test
 
 import (
+	_ "embed"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,13 +23,9 @@ func (ps falseSender) Send(m mail.Message) error {
 	return nil
 }
 
-const (
-	txtFormat = `From: %v <br>
-		To: %v <br>
-		Cc: %v <br>
-		Bcc: %v <br>
-		Subject: %v <br>
-		----------------------------`
+var (
+	//go:embed plain-header.txt
+	txtFormat string
 )
 
 func Test_Send(t *testing.T) {
@@ -47,7 +44,7 @@ func Test_Send(t *testing.T) {
 
 	m.Bodies = []mail.Body{
 		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
-		{ContentType: "text/plain", Content: "Same message"},
+		{ContentType: "text/plain", Content: "Some message"},
 	}
 
 	m.Attachments = []mail.Attachment{
@@ -65,31 +62,33 @@ func Test_Send(t *testing.T) {
 	r.FileExists(htmlFile)
 	r.FileExists(txtFile)
 
-	txtHeader, err := ioutil.ReadFile(htmlFile)
+	htmlContent, err := ioutil.ReadFile(htmlFile)
 	r.NoError(err)
 
-	r.Contains(string(txtHeader), m.From)
-	r.Contains(string(txtHeader), m.To[0])
-	r.Contains(string(txtHeader), m.CC[0])
-	r.Contains(string(txtHeader), m.Bcc[0])
-	r.Contains(string(txtHeader), m.Subject)
+	r.Contains(string(htmlContent), m.From)
+	r.Contains(string(htmlContent), m.To[0])
+	r.Contains(string(htmlContent), m.CC[0])
+	r.Contains(string(htmlContent), m.Bcc[0])
+	r.Contains(string(htmlContent), m.Subject)
+	r.Contains(string(htmlContent), "Some Message")
 
 	for _, a := range m.Attachments {
-		r.Contains(string(txtHeader), a.Name)
+		r.Contains(string(htmlContent), a.Name)
 	}
 
-	txtHeader, err = ioutil.ReadFile(txtFile)
+	txtContent, err := ioutil.ReadFile(txtFile)
 	r.NoError(err)
 
-	r.Contains(string(txtHeader), m.From)
-	r.Contains(string(txtHeader), m.To[0])
-	r.Contains(string(txtHeader), m.CC[0])
-	r.Contains(string(txtHeader), m.Bcc[0])
-	r.Contains(string(txtHeader), m.Subject)
+	r.Contains(string(txtContent), m.From)
+	r.Contains(string(txtContent), m.To[0])
+	r.Contains(string(txtContent), m.CC[0])
+	r.Contains(string(txtContent), m.Bcc[0])
+	r.Contains(string(txtContent), m.Subject)
+	r.Contains(string(txtContent), "Some message")
 
 	format := strings.ReplaceAll(txtFormat, "\t", "")
 
-	r.Equal(string(txtHeader), fmt.Sprintf(format, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
+	r.Contains(string(txtContent), fmt.Sprintf(format, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
 }
 
 func Test_SendWithOptionsOnlyHTML(t *testing.T) {
