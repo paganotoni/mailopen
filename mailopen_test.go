@@ -3,14 +3,13 @@ package mailopen_test
 import (
 	_ "embed"
 	"fmt"
-	"io/ioutil"
+	"mime"
 	"os"
 	"path"
-	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gobuffalo/buffalo/mail"
-	"github.com/gobuffalo/flect"
 	"github.com/paganotoni/mailopen/v2"
 
 	"github.com/stretchr/testify/require"
@@ -28,11 +27,9 @@ var (
 )
 
 func Test_Send(t *testing.T) {
-	mailopen.Testing = true
-
 	r := require.New(t)
-	sender := mailopen.WithOptions()
-	sender.Open = false
+
+	mailopen.Testing = true
 
 	m := mail.NewMessage()
 	m.From = "testing@testing.com"
@@ -41,160 +38,144 @@ func Test_Send(t *testing.T) {
 	m.Bcc = []string{"aax@other.com"}
 	m.Subject = "something"
 
-	m.Bodies = []mail.Body{
-		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
-		{ContentType: "text/plain", Content: "Some message"},
-	}
+	const testHTMLcontent = `<html><head></head><body><div>Some Message</div></body></html>`
 
-	m.Attachments = []mail.Attachment{
-		{Name: "csv_test", Reader: openFile(filepath.Join("test_files", "csv_sample.csv"), r), ContentType: "text/csv", Embedded: false},
-		{Name: "img_test", Reader: openFile(filepath.Join("test_files", "img_sample.jpeg"), r), ContentType: "image/jpeg", Embedded: false},
-		{Name: "pdf_test", Reader: openFile(filepath.Join("test_files", "pdf_sample.pdf"), r), ContentType: "application/pdf", Embedded: false},
-		{Name: "zip_test", Reader: openFile(filepath.Join("test_files", "zip_sample.zip"), r), ContentType: "application/zip", Embedded: false},
-	}
+	t.Run("html and plain with attachments", func(t *testing.T) {
+		sender := mailopen.WithOptions()
+		sender.Open = false
+		sender.TempDir = t.TempDir()
 
-	r.NoError(sender.Send(m))
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+			{ContentType: "text/plain", Content: "Same message"},
+		}
 
-	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_0.html", flect.Underscore(m.Subject)))
-	txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_1.html", flect.Underscore(m.Subject)))
+		m.Attachments = []mail.Attachment{
+			{Name: "txt_test", Reader: strings.NewReader(""), ContentType: "text/plain", Embedded: false},
+			{Name: "csv_test", Reader: strings.NewReader(""), ContentType: "text/csv", Embedded: false},
+			{Name: "img_test", Reader: strings.NewReader(""), ContentType: "image/jpeg", Embedded: false},
+			{Name: "pdf_test", Reader: strings.NewReader(""), ContentType: "application/pdf", Embedded: false},
+			{Name: "zip_test", Reader: strings.NewReader(""), ContentType: "application/zip", Embedded: false},
+		}
 
-	r.FileExists(htmlFile)
-	r.FileExists(txtFile)
+		r.NoError(sender.Send(m))
 
-	htmlContent, err := ioutil.ReadFile(htmlFile)
-	r.NoError(err)
+		htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
 
-	r.Contains(string(htmlContent), m.From)
-	r.Contains(string(htmlContent), m.To[0])
-	r.Contains(string(htmlContent), m.CC[0])
-	r.Contains(string(htmlContent), m.Bcc[0])
-	r.Contains(string(htmlContent), m.Subject)
-	r.Contains(string(htmlContent), "Some Message")
+		r.FileExists(htmlFile)
+		r.FileExists(txtFile)
 
-	for _, a := range m.Attachments {
-		r.Contains(string(htmlContent), a.Name)
-	}
+		htmlHeader, err := os.ReadFile(htmlFile)
+		r.NoError(err)
 
-	txtContent, err := ioutil.ReadFile(txtFile)
-	r.NoError(err)
+		fmt.Println(string(htmlHeader))
 
-	r.Contains(string(txtContent), m.From)
-	r.Contains(string(txtContent), m.To[0])
-	r.Contains(string(txtContent), m.CC[0])
-	r.Contains(string(txtContent), m.Bcc[0])
-	r.Contains(string(txtContent), m.Subject)
-	r.Contains(string(txtContent), "Some message")
+		r.Contains(string(htmlHeader), m.From)
+		r.Contains(string(htmlHeader), m.To[0])
+		r.Contains(string(htmlHeader), m.CC[0])
+		r.Contains(string(htmlHeader), m.Bcc[0])
+		r.Contains(string(htmlHeader), m.Subject)
 
-	r.Contains(string(txtContent), fmt.Sprintf(txtFormat, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
-}
+		for _, a := range m.Attachments {
+			r.Contains(string(htmlHeader), a.Name)
 
-func Test_SendWithOptionsOnlyHTML(t *testing.T) {
-	r := require.New(t)
+			ext, err := mime.ExtensionsByType(a.ContentType)
+			r.NoError(err)
 
-	mailopen.Testing = true
+			filePath := path.Join(sender.TempDir, fmt.Sprintf("%s%s", a.Name, ext[0]))
+			r.FileExists(filePath)
+		}
 
-	sender := mailopen.WithOptions(mailopen.Only("text/html"))
-	sender.Open = false
+		txtHeader, err := os.ReadFile(txtFile)
+		r.NoError(err)
+		format := strings.ReplaceAll(txtFormat, "\t", "")
 
-	m := mail.NewMessage()
-	m.From = "testing@testing.com"
-	m.To = []string{"testing@other.com"}
-	m.CC = []string{"aa@other.com"}
-	m.Bcc = []string{"aax@other.com"}
-	m.Subject = "something"
-	m.Bodies = []mail.Body{
-		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
-		{ContentType: "text/plain", Content: "Same message"},
-	}
+		r.Equal(string(txtHeader), fmt.Sprintf(format, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
+	})
 
-	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_0.html", flect.Underscore(m.Subject)))
-	txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_1.html", flect.Underscore(m.Subject)))
+	t.Run("html only", func(t *testing.T) {
+		sender := mailopen.WithOptions(mailopen.Only("text/html"))
+		sender.Open = false
+		sender.TempDir = t.TempDir()
 
-	os.Remove(htmlFile)
-	os.Remove(txtFile)
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+			{ContentType: "text/plain", Content: "Same message"},
+		}
 
-	r.NoError(sender.Send(m))
+		htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
 
-	r.FileExists(htmlFile)
-	r.NoFileExists(txtFile)
-}
+		r.NoError(sender.Send(m))
 
-func Test_SendWithOptionsOnlyTXT(t *testing.T) {
-	r := require.New(t)
+		r.FileExists(htmlFile)
+		r.NoFileExists(txtFile)
 
-	mailopen.Testing = true
+		dat, err := os.ReadFile(htmlFile)
+		r.NoError(err)
 
-	sender := mailopen.WithOptions(mailopen.Only("text/plain"))
-	sender.Open = false
+		r.NotContains(string(dat), "Attachment:")
+	})
 
-	m := mail.NewMessage()
-	m.From = "testing@testing.com"
-	m.To = []string{"testing@other.com"}
-	m.CC = []string{"aa@other.com"}
-	m.Bcc = []string{"aax@other.com"}
-	m.Subject = "something"
-	m.Bodies = []mail.Body{
-		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
-		{ContentType: "text/plain", Content: "Same message"},
-	}
+	t.Run("plain only", func(t *testing.T) {
+		sender := mailopen.WithOptions(mailopen.Only("text/plain"))
+		sender.Open = false
+		sender.TempDir = t.TempDir()
 
-	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_0.html", flect.Underscore(m.Subject)))
-	txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_1.html", flect.Underscore(m.Subject)))
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+			{ContentType: "text/plain", Content: "Same message"},
+		}
 
-	os.Remove(htmlFile)
-	os.Remove(txtFile)
+		htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
 
-	r.NoError(sender.Send(m))
+		r.NoError(sender.Send(m))
 
-	r.NoFileExists(htmlFile)
-	r.FileExists(txtFile)
-}
+		r.NoFileExists(htmlFile)
+		r.FileExists(txtFile)
+	})
 
-func Test_SendWithOneBody(t *testing.T) {
-	mailopen.Testing = true
+	t.Run("long subject and long file name`", func(t *testing.T) {
+		sender := mailopen.WithOptions()
+		sender.Open = false
+		sender.TempDir = t.TempDir()
 
-	r := require.New(t)
-	sender := mailopen.WithOptions()
-	sender.Open = false
+		m := mail.NewMessage()
 
-	m := mail.NewMessage()
-	m.From = "testing@testing.com"
-	m.To = []string{"testing@other.com"}
-	m.CC = []string{"aa@other.com"}
-	m.Bcc = []string{"aax@other.com"}
-	m.Subject = "something"
-	m.Bodies = []mail.Body{
-		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
-	}
+		m.Subject = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam nec leo tellus. Aliquam ac facilisis est, condimentum pellentesque velit. In quis erat turpis. Morbi accumsan ante nec nunc dapibus, quis lacinia mi ornare. Vivamus venenatis accumsan dolor ac placerat. Sed pulvinar sem eu est accumsan, ut commodo mi viverra. Quisque turpis metus, ultrices id mauris vel, suscipit sollicitudin erat. Vivamus eget quam non sem volutpat eleifend eget in lacus. In vulputate, justo fringilla lacinia lobortis, neque turpis dignissim tellus, in placerat eros justo nec massa. Duis ex enim, convallis ut leo nec, condimentum consectetur mi. Vestibulum imperdiet pharetra ipsum. Etiam venenatis tincidunt odio, sed feugiat quam blandit sit amet. Donec eget nulla dui."
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+			{ContentType: "text/plain", Content: "Same message"},
+		}
 
-	r.Error(sender.Send(m))
-}
+		m.Attachments = []mail.Attachment{
+			{Name: "123456789-123456789-123456789-123456789-123456789-1", Reader: strings.NewReader(""), ContentType: "text/plain", Embedded: false},
+		}
 
-func Test_SendWithoutAttachments(t *testing.T) {
-	mailopen.Testing = true
+		r.NoError(sender.Send(m))
 
-	r := require.New(t)
-	sender := mailopen.WithOptions()
-	sender.Open = false
+		att := m.Attachments[0]
 
-	m := mail.NewMessage()
-	m.From = "testing@testing.com"
-	m.To = []string{"testing@other.com"}
-	m.CC = []string{"aa@other.com"}
-	m.Bcc = []string{"aax@other.com"}
-	m.Subject = "something"
-	m.Bodies = []mail.Body{
-		{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
-		{ContentType: "text/plain", Content: "Same message"},
-	}
+		exts, err := mime.ExtensionsByType(att.ContentType)
+		r.NoError(err)
 
-	r.NoError(sender.Send(m))
+		filePath := path.Join(sender.TempDir, fmt.Sprintf("%s%s", att.Name[0:50], exts[0]))
+		r.FileExists(filePath)
+	})
 
-	htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_%s.html", flect.Underscore(m.Subject), "0"))
+	t.Run("only one body", func(t *testing.T) {
+		sender := mailopen.WithOptions()
+		sender.Open = false
+		sender.TempDir = t.TempDir()
 
-	dat, err := ioutil.ReadFile(htmlFile)
-	r.NoError(err)
-	r.NotContains(string(dat), "Attachment:")
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+		}
+
+		r.Error(sender.Send(m))
+	})
 }
 
 func Test_Wrap(t *testing.T) {
@@ -218,11 +199,4 @@ func Test_Wrap(t *testing.T) {
 	s = mailopen.Wrap(falseSender{})
 	r.IsType(falseSender{}, s)
 
-}
-
-func openFile(name string, r *require.Assertions) *os.File {
-	f, err := os.Open(name)
-	r.NoError(err)
-
-	return f
 }
