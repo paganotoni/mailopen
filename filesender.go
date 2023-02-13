@@ -110,7 +110,7 @@ func (ps FileSender) Send(m mail.Message) error {
 		)
 
 		var re = regexp.MustCompile(cc.replaceRegexp)
-		content := re.ReplaceAllString(v.Content, header)
+		content := re.ReplaceAllString(v.Content, fmt.Sprintf("$1\n%v\n$2$3", header))
 		tmpName := strings.ReplaceAll(v.ContentType, "/", "_") + "_body"
 
 		path, err := ps.saveEmailBody(content, tmpName, m)

@@ -1,6 +1,7 @@
 package mailopen_test
 
 import (
+	_ "embed"
 	"fmt"
 	"mime"
 	"os"
@@ -20,13 +21,9 @@ func (ps falseSender) Send(m mail.Message) error {
 	return nil
 }
 
-const (
-	txtFormat = `From: %v <br>
-		To: %v <br>
-		Cc: %v <br>
-		Bcc: %v <br>
-		Subject: %v <br>
-		----------------------------`
+var (
+	//go:embed plain-header.txt
+	txtFormat string
 )
 
 func Test_Send(t *testing.T) {
