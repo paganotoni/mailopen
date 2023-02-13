@@ -69,8 +69,6 @@ func Test_Send(t *testing.T) {
 		htmlHeader, err := os.ReadFile(htmlFile)
 		r.NoError(err)
 
-		fmt.Println(string(htmlHeader))
-
 		r.Contains(string(htmlHeader), m.From)
 		r.Contains(string(htmlHeader), m.To[0])
 		r.Contains(string(htmlHeader), m.CC[0])
@@ -87,11 +85,17 @@ func Test_Send(t *testing.T) {
 			r.FileExists(filePath)
 		}
 
-		txtHeader, err := os.ReadFile(txtFile)
+		txtContent, err := os.ReadFile(txtFile)
 		r.NoError(err)
-		format := strings.ReplaceAll(txtFormat, "\t", "")
 
-		r.Equal(string(txtHeader), fmt.Sprintf(format, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
+		r.Contains(string(txtContent), m.From)
+		r.Contains(string(txtContent), m.To[0])
+		r.Contains(string(txtContent), m.CC[0])
+		r.Contains(string(txtContent), m.Bcc[0])
+		r.Contains(string(txtContent), m.Subject)
+		r.Contains(string(txtContent), "Same message")
+
+		r.Contains(string(txtContent), fmt.Sprintf(txtFormat, m.From, m.To[0], m.CC[0], m.Bcc[0], m.Subject))
 	})
 
 	t.Run("html only", func(t *testing.T) {
