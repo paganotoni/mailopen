@@ -39,7 +39,6 @@ func Test_Send(t *testing.T) {
 	m.Subject = "something"
 
 	const testHTMLcontent = `<html><head></head><body><div>Some Message</div></body></html>`
-	const testPlainContent = "Same message"
 
 	t.Run("html and plain with attachments", func(t *testing.T) {
 		sender := mailopen.WithOptions()
@@ -48,7 +47,7 @@ func Test_Send(t *testing.T) {
 
 		m.Bodies = []mail.Body{
 			{ContentType: "text/html", Content: testHTMLcontent},
-			{ContentType: "text/plain", Content: testPlainContent},
+			{ContentType: "text/plain", Content: "Same message"},
 		}
 
 		m.Attachments = []mail.Attachment{
@@ -101,7 +100,7 @@ func Test_Send(t *testing.T) {
 		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
-			{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
+			{ContentType: "text/html", Content: testHTMLcontent},
 			{ContentType: "text/plain", Content: "Same message"},
 		}
 
@@ -125,7 +124,7 @@ func Test_Send(t *testing.T) {
 		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
-			{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
+			{ContentType: "text/html", Content: testHTMLcontent},
 			{ContentType: "text/plain", Content: "Same message"},
 		}
 
@@ -147,7 +146,7 @@ func Test_Send(t *testing.T) {
 
 		m.Subject = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam nec leo tellus. Aliquam ac facilisis est, condimentum pellentesque velit. In quis erat turpis. Morbi accumsan ante nec nunc dapibus, quis lacinia mi ornare. Vivamus venenatis accumsan dolor ac placerat. Sed pulvinar sem eu est accumsan, ut commodo mi viverra. Quisque turpis metus, ultrices id mauris vel, suscipit sollicitudin erat. Vivamus eget quam non sem volutpat eleifend eget in lacus. In vulputate, justo fringilla lacinia lobortis, neque turpis dignissim tellus, in placerat eros justo nec massa. Duis ex enim, convallis ut leo nec, condimentum consectetur mi. Vestibulum imperdiet pharetra ipsum. Etiam venenatis tincidunt odio, sed feugiat quam blandit sit amet. Donec eget nulla dui."
 		m.Bodies = []mail.Body{
-			{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
+			{ContentType: "text/html", Content: testHTMLcontent},
 			{ContentType: "text/plain", Content: "Same message"},
 		}
 
@@ -172,7 +171,7 @@ func Test_Send(t *testing.T) {
 		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
-			{ContentType: "text/html", Content: "<html><head></head><body><div>Some Message</div></body></html>"},
+			{ContentType: "text/html", Content: testHTMLcontent},
 		}
 
 		r.Error(sender.Send(m))
