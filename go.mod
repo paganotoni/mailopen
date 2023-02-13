@@ -1,6 +1,6 @@
 module github.com/paganotoni/mailopen/v2
 
-go 1.17
+go 1.20
 
 require (
 	github.com/gobuffalo/buffalo v0.18.0
