@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/gobuffalo/buffalo v0.18.0
-	github.com/gobuffalo/flect v0.2.4
 	github.com/gofrs/uuid v4.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/stretchr/testify v1.7.0
@@ -24,6 +23,7 @@ require (
 	github.com/gobuffalo/envy v1.10.1 // indirect
 	github.com/gobuffalo/events v1.4.2 // indirect
 	github.com/gobuffalo/fizz v1.14.0 // indirect
+	github.com/gobuffalo/flect v0.2.4 // indirect
 	github.com/gobuffalo/github_flavored_markdown v1.1.1 // indirect
 	github.com/gobuffalo/helpers v0.6.4 // indirect
 	github.com/gobuffalo/logger v1.0.6 // indirect
