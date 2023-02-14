@@ -20,6 +20,6 @@ func Wrap(sender mail.Sender) mail.Sender {
 
 	return FileSender{
 		Open: true,
-		dir:  os.TempDir(),
+		dir:  getEnv(MailOpenDirKey, os.TempDir()),
 	}
 }
