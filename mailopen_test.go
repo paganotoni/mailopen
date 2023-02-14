@@ -179,6 +179,26 @@ func Test_Send(t *testing.T) {
 
 		r.Error(sender.Send(m))
 	})
+
+	t.Run("with custom folder", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		os.Setenv(mailopen.MailOpenDirKey, tmpDir)
+		sender := mailopen.WithOptions()
+		sender.Open = false
+
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+			{ContentType: "text/plain", Content: "Same message"},
+		}
+
+		r.NoError(sender.Send(m))
+
+		htmlFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
+
+		r.FileExists(htmlFile)
+		r.FileExists(txtFile)
+	})
 }
 
 func Test_Wrap(t *testing.T) {
