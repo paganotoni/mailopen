@@ -50,6 +50,8 @@ func init() {
 
 Then you will use your `Sender` instance as usual by calling `Sender.Send(m)` with the variant that in development it will open your emails in the browser.
 
+By default, mailopen will save the emails and attachments in a temporary directory. You can customize this by passing options to the [`mailopen.WithOptions`](#options) or setting the `MAILOPEN_DIR` env variable in your machine.
+
 ### Options
 
 You can pass options to the `mailopen.WithOptions` function to customize the way it work.
