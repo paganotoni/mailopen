@@ -41,9 +41,9 @@ func Test_Send(t *testing.T) {
 	const testHTMLcontent = `<html><head></head><body><div>Some Message</div></body></html>`
 
 	t.Run("html and plain with attachments", func(t *testing.T) {
-		sender := mailopen.WithOptions()
+		tmpDir := t.TempDir()
+		sender := mailopen.WithOptions(mailopen.Directory(tmpDir))
 		sender.Open = false
-		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
 			{ContentType: "text/html", Content: testHTMLcontent},
@@ -60,8 +60,8 @@ func Test_Send(t *testing.T) {
 
 		r.NoError(sender.Send(m))
 
-		htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
-		txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
+		htmlFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
 
 		r.FileExists(htmlFile)
 		r.FileExists(txtFile)
@@ -81,7 +81,7 @@ func Test_Send(t *testing.T) {
 			ext, err := mime.ExtensionsByType(a.ContentType)
 			r.NoError(err)
 
-			filePath := path.Join(sender.TempDir, fmt.Sprintf("%s%s", a.Name, ext[0]))
+			filePath := path.Join(tmpDir, fmt.Sprintf("%s%s", a.Name, ext[0]))
 			r.FileExists(filePath)
 		}
 
@@ -99,17 +99,17 @@ func Test_Send(t *testing.T) {
 	})
 
 	t.Run("html only", func(t *testing.T) {
-		sender := mailopen.WithOptions(mailopen.Only("text/html"))
+		tmpDir := t.TempDir()
+		sender := mailopen.WithOptions(mailopen.Only("text/html"), mailopen.Directory(tmpDir))
 		sender.Open = false
-		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
 			{ContentType: "text/html", Content: testHTMLcontent},
 			{ContentType: "text/plain", Content: "Same message"},
 		}
 
-		htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
-		txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
+		htmlFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
 
 		r.NoError(sender.Send(m))
 
@@ -123,17 +123,17 @@ func Test_Send(t *testing.T) {
 	})
 
 	t.Run("plain only", func(t *testing.T) {
-		sender := mailopen.WithOptions(mailopen.Only("text/plain"))
+		tmpDir := t.TempDir()
+		sender := mailopen.WithOptions(mailopen.Only("text/plain"), mailopen.Directory(tmpDir))
 		sender.Open = false
-		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
 			{ContentType: "text/html", Content: testHTMLcontent},
 			{ContentType: "text/plain", Content: "Same message"},
 		}
 
-		htmlFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
-		txtFile := path.Join(sender.TempDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
+		htmlFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
 
 		r.NoError(sender.Send(m))
 
@@ -142,9 +142,9 @@ func Test_Send(t *testing.T) {
 	})
 
 	t.Run("long subject and long file name`", func(t *testing.T) {
-		sender := mailopen.WithOptions()
+		tmpDir := t.TempDir()
+		sender := mailopen.WithOptions(mailopen.Directory(tmpDir))
 		sender.Open = false
-		sender.TempDir = t.TempDir()
 
 		m := mail.NewMessage()
 
@@ -165,20 +165,39 @@ func Test_Send(t *testing.T) {
 		exts, err := mime.ExtensionsByType(att.ContentType)
 		r.NoError(err)
 
-		filePath := path.Join(sender.TempDir, fmt.Sprintf("%s%s", att.Name[0:50], exts[0]))
+		filePath := path.Join(tmpDir, fmt.Sprintf("%s%s", att.Name[0:50], exts[0]))
 		r.FileExists(filePath)
 	})
 
 	t.Run("only one body", func(t *testing.T) {
-		sender := mailopen.WithOptions()
+		sender := mailopen.WithOptions(mailopen.Directory(t.TempDir()))
 		sender.Open = false
-		sender.TempDir = t.TempDir()
 
 		m.Bodies = []mail.Body{
 			{ContentType: "text/html", Content: testHTMLcontent},
 		}
 
 		r.Error(sender.Send(m))
+	})
+
+	t.Run("with custom folder", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		os.Setenv(mailopen.MailOpenDirKey, tmpDir)
+		sender := mailopen.WithOptions()
+		sender.Open = false
+
+		m.Bodies = []mail.Body{
+			{ContentType: "text/html", Content: testHTMLcontent},
+			{ContentType: "text/plain", Content: "Same message"},
+		}
+
+		r.NoError(sender.Send(m))
+
+		htmlFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[0].ContentType, "/", "_")))
+		txtFile := path.Join(tmpDir, fmt.Sprintf("%s_body.html", strings.ReplaceAll(m.Bodies[1].ContentType, "/", "_")))
+
+		r.FileExists(htmlFile)
+		r.FileExists(txtFile)
 	})
 }
 

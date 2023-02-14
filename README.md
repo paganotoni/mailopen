@@ -6,7 +6,7 @@ Mailopen is a buffalo mailer that allows to see sent emails in the browser inste
 
 ### Usage
 
-Mailopen is only intended for development purposes, the way you use it is by simply initialyzing your mailer to be a mailopen instance instead of your regular sender, p.e:
+Mailopen is only intended for development purposes, the way you use it is by simply initializing your mailer to be a mailopen instance instead of your regular sender, p.e:
 
 ```go
 import (
@@ -49,3 +49,14 @@ func init() {
 ```
 
 Then you will use your `Sender` instance as usual by calling `Sender.Send(m)` with the variant that in development it will open your emails in the browser.
+
+By default, mailopen will save the emails and attachments in a temporary directory. You can customize this by passing options to the [`mailopen.WithOptions`](#options) or setting the `MAILOPEN_DIR` env variable in your machine.
+
+### Options
+
+You can pass options to the `mailopen.WithOptions` function to customize the way it work.
+
+- `Only` allows you to specify which content types you want to open in the browser, p.e: `mailopen.Only("text/html")`.
+
+- `Directory` allows you to specify the directory where the emails and attachments will be saved, p.e: `mailopen.Directory("/tmp")`.
+

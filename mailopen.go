@@ -7,6 +7,8 @@ import (
 
 var Testing = false
 
+const MailOpenDirKey = "MAILOPEN_DIR"
+
 // New creates a sender that writes emails into disk
 func New() FileSender {
 	fmt.Println("Deprecated: use WithOptions instead.")
@@ -18,8 +20,8 @@ func New() FileSender {
 // And applies the passed options.
 func WithOptions(options ...Option) FileSender {
 	s := FileSender{
-		Open:    true,
-		TempDir: os.TempDir(),
+		Open: true,
+		dir:  getEnv(MailOpenDirKey, os.TempDir()),
 	}
 
 	for _, option := range options {
@@ -27,4 +29,11 @@ func WithOptions(options ...Option) FileSender {
 	}
 
 	return s
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

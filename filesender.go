@@ -54,8 +54,9 @@ type contentConfig struct {
 // FileSender implements the Sender interface to be used
 // within buffalo mailer generated package.
 type FileSender struct {
-	Open    bool
-	TempDir string
+	Open bool
+	// dir is the directory to save the files to (attachments and email templates).
+	dir string
 
 	// openContentTypes are those content types to open in browser
 	openContentTypes []string
@@ -150,7 +151,7 @@ func (ps FileSender) saveEmailBody(content, tmpName string, m mail.Message) (str
 		filePath = fmt.Sprintf("%s.html", tmpName)
 	}
 
-	path := path.Join(ps.TempDir, filePath)
+	path := path.Join(ps.dir, filePath)
 	err = os.WriteFile(path, tpl.Bytes(), 0644)
 
 	return path, err
@@ -169,9 +170,9 @@ func (ps FileSender) saveAttachmentFiles(Attachments []mail.Attachment) ([]AttFi
 			return []AttFile{}, fmt.Errorf("mailopen: failed to get extension for content type %s: %w", a.ContentType, err)
 		}
 
-		filePath := path.Join(ps.TempDir, fmt.Sprintf("%s_%s%s", uuid.Must(uuid.NewV4()), a.Name, exts[0]))
+		filePath := path.Join(ps.dir, fmt.Sprintf("%s_%s%s", uuid.Must(uuid.NewV4()), a.Name, exts[0]))
 		if Testing {
-			filePath = path.Join(ps.TempDir, fmt.Sprintf("%s%s", a.Name, exts[0]))
+			filePath = path.Join(ps.dir, fmt.Sprintf("%s%s", a.Name, exts[0]))
 		}
 
 		b, err := io.ReadAll(a.Reader)
