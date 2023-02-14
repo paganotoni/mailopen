@@ -18,8 +18,8 @@ func New() FileSender {
 // And applies the passed options.
 func WithOptions(options ...Option) FileSender {
 	s := FileSender{
-		Open:    true,
-		TempDir: os.TempDir(),
+		Open: true,
+		dir:  os.TempDir(),
 	}
 
 	for _, option := range options {
