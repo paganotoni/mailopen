@@ -1,3 +1,7 @@
+Important: I built an alternative to mailopen: [Meilo](https://github.com/wawandco/meilo/tree/main). Meilo does not rely on Buffalo or its dependencies. It works as an SMTP server that can be replaced in production with credentials. I've found using SMTP is better in the long run as one can switch between providers without much issues. 
+------
+
+
 [![Build Status](https://travis-ci.org/paganotoni/mailopen.svg?branch=master)](https://travis-ci.org/paganotoni/mailopen)
 
 ## Mailopen
